@@ -1,15 +1,15 @@
-import { createServer } from "node:http";
-import { join } from "node:path";
-import { hostname } from "node:os";
-import wisp from "wisp-server-node";
-import Fastify from "fastify";
-import fastifyStatic from "@fastify/static";
+const { createServer } = require("node:http");
+const { hostname } = require("node:os");
+const wisp = require("wisp-server-node");
+const Fastify = require("fastify");
+const fastifyStatic = require("@fastify/static");
+const path = require("path");
 
 // static paths
-import { publicPath } from "ultraviolet-static";
-import { uvPath } from "@titaniumnetwork-dev/ultraviolet";
-import { epoxyPath } from "@mercuryworkshop/epoxy-transport";
-import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
+const publicPath = path.join(__dirname, "../Ultraviolet-Static/public");
+const { uvPath } = require("@titaniumnetwork-dev/ultraviolet");
+const { epoxyPath } = require("@mercuryworkshop/epoxy-transport");
+const { baremuxPath } = require("@mercuryworkshop/bare-mux/node");
 
 const fastify = Fastify({
 	serverFactory: (handler) => {
@@ -27,7 +27,7 @@ const fastify = Fastify({
 });
 
 fastify.register(fastifyStatic, {
-	root: publicPath,
+	root: path.join(publicPath),
 	decorateReply: true,
 });
 

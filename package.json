@@ -2,7 +2,7 @@
 	"name": "uv-app",
 	"version": "1.0.0",
 	"description": "Ultraviolet instance",
-	"type": "module",
+	"type": "commonjs",
 	"engines": {
 		"npm": ">=7.0.0",
 		"node": ">=16.0.0"
