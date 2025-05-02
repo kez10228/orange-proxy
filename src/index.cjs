@@ -137,7 +137,7 @@ function shutdown() {
 	process.exit(0);
 }
 
-let port = 3000;
+let port = 3002;
 
 if (isNaN(port)) port = 8080;
 
