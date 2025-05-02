@@ -78,7 +78,7 @@ fastify.post("/webhook", async (req, res) => {
         return;
     }
 
-    const body = req.body;
+    const body = req.body
 
     if (event === "push") {
         console.log(`Received push event for repository: ${body.repository.full_name}`);
