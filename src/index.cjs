@@ -86,7 +86,10 @@ fastify.post("/webhook", async (req, res) => {
         console.log(`Commit message: ${body.head_commit.message}`);
 
         // Run git pull
-        exec("git pull", { cwd: "c:\\Users\\zhank\\Documents\\Orange army\\orange-proxy" }, (error, stdout, stderr) => {
+        exec("git pull", { 
+            cwd: "/home/ubuntu/orange-proxy", 
+            shell: "/bin/bash" 
+        }, (error, stdout, stderr) => {
             if (error) {
                 console.error(`Error executing git pull: ${error.message}`);
                 return;
@@ -97,7 +100,7 @@ fastify.post("/webhook", async (req, res) => {
             console.log(`git pull stdout: ${stdout}`);
 
             // Restart the application using PM2
-            exec("pm2 restart orange-proxy", (pm2Error, pm2Stdout, pm2Stderr) => {
+            exec("pm2 restart orange-proxy", { shell: "/bin/bash" }, (pm2Error, pm2Stdout, pm2Stderr) => {
                 if (pm2Error) {
                     console.error(`Error restarting application with PM2: ${pm2Error.message}`);
                     return;
