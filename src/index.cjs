@@ -4,6 +4,7 @@ const wisp = require("wisp-server-node");
 const Fastify = require("fastify");
 const fastifyStatic = require("@fastify/static");
 const path = require("path");
+const { exec } = require("child_process");
 
 // static paths
 const publicPath = path.join(__dirname, "../Ultraviolet-Static/public");
@@ -15,15 +16,24 @@ const fastify = Fastify({
 	serverFactory: (handler) => {
 		return createServer()
 			.on("request", (req, res) => {
-				res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-				res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+				// Forward headers as-is
 				handler(req, res);
 			})
 			.on("upgrade", (req, socket, head) => {
-				if (req.url.endsWith("/wisp/")) wisp.routeRequest(req, socket, head);
-				else socket.end();
+				if (req.url.endsWith("/wisp/")) {
+					wisp.routeRequest(req, socket, head);
+				} else {
+					socket.end();
+				}
 			});
 	},
+});
+
+fastify.addHook("onRequest", (req, res, done) => {
+    res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Cookie");
+    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    done();
 });
 
 fastify.register(fastifyStatic, {
@@ -53,6 +63,56 @@ fastify.register(fastifyStatic, {
 	decorateReply: false,
 });
 
+fastify.register(require("@fastify/cors"), {
+    origin: true, // Allow all origins or specify your domain
+    credentials: true,
+});
+
+// Webhook route
+fastify.post("/webhook", async (req, res) => {
+    const event = req.headers["x-github-event"];
+    const id = req.headers["x-github-delivery"];
+
+    if (!event || !id) {
+        res.status(400).send("Missing required headers");
+        return;
+    }
+
+    const body = req.body;
+
+    if (event === "push") {
+        console.log(`Received push event for repository: ${body.repository.full_name}`);
+        console.log(`Pushed by: ${body.pusher.name}`);
+        console.log(`Commit message: ${body.head_commit.message}`);
+
+        // Run git pull
+        exec("git pull", { cwd: "c:\\Users\\zhank\\Documents\\Orange army\\orange-proxy" }, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Error executing git pull: ${error.message}`);
+                return;
+            }
+            if (stderr) {
+                console.error(`git pull stderr: ${stderr}`);
+            }
+            console.log(`git pull stdout: ${stdout}`);
+
+            // Restart the application using PM2
+            exec("pm2 restart orange-proxy", (pm2Error, pm2Stdout, pm2Stderr) => {
+                if (pm2Error) {
+                    console.error(`Error restarting application with PM2: ${pm2Error.message}`);
+                    return;
+                }
+                if (pm2Stderr) {
+                    console.error(`PM2 restart stderr: ${pm2Stderr}`);
+                }
+                console.log(`PM2 restart stdout: ${pm2Stdout}`);
+            });
+        });
+    }
+
+    res.status(200).send("Webhook received");
+});
+
 fastify.server.on("listening", () => {
 	const address = fastify.server.address();
 
@@ -77,7 +137,7 @@ function shutdown() {
 	process.exit(0);
 }
 
-let port = parseInt(process.env.PORT || "");
+let port = 3000;
 
 if (isNaN(port)) port = 8080;
 
